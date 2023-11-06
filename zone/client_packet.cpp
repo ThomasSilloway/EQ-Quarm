@@ -2867,6 +2867,10 @@ void Client::Handle_OP_ClickObject(const EQApplicationPacket *app)
 		if (object->IsPlayerDrop())
 		{
 			std::string msg;
+			// if (Admin() > 0)
+			// {
+			// 	msg = "You cannot pick up dropped player items because you're a GM and that would make the players around you a sad panda.";
+			// }
 			if ((IsSelfFound() || IsSoloOnly()))
 			{
 				// If the client is self found or solo, don't allow them to pick up the item, unless they are the one that dropped it
