@@ -3690,12 +3690,12 @@ void Client::Handle_OP_CorpseDrag(const EQApplicationPacket *app)
 
 void Client::Handle_OP_CreateObject(const EQApplicationPacket *app) 
 {
-	if (Admin() > 0)
-	{
-		std::string msg = "You cannot drop items as a GM. The emulator has had enough issues with that.";
-		Message(CC_Red, msg.c_str());
-		return;
-	}
+	// if (Admin() > 0)
+	// {
+	// 	std::string msg = "You cannot drop items as a GM. The emulator has had enough issues with that.";
+	// 	Message(CC_Red, msg.c_str());
+	// 	return;
+	// }
 
 	DropItem(EQ::invslot::slotCursor);
 	return;
