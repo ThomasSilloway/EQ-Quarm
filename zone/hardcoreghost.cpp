@@ -1,11 +1,26 @@
 #include "hardcoreghost.h"
+#include "hardcoreghost_database.h"
 #include "mob.h"
 #include "client.h"
 #include "zone.h"
 #include "npc.h"
 #include "entity.h"
 
-HardcoreGhost::HardcoreGhost(const NPCType *npc_type_data, const glm::vec4& position)
+HardcoreGhost* HardcoreGhost::LoadBot(const std::string& ghost_name)
+{
+    if (ghost_name.empty()) {
+        return nullptr;
+    }
+
+    HardcoreGhost* loaded_bot = nullptr;
+
+    if (!HardcoreGhostDatabase::LoadHardcoreGhost(ghost_name, loaded_bot)) 
+		return loaded_bot;
+
+	return loaded_bot;
+}
+
+HardcoreGhost::HardcoreGhost(const NPCType *npc_type_data)
     : Mob(
         npc_type_data->name,
         npc_type_data->lastname,
@@ -20,7 +35,8 @@ HardcoreGhost::HardcoreGhost(const NPCType *npc_type_data, const glm::vec4& posi
         npc_type_data->npc_id,
         npc_type_data->size,
         npc_type_data->runspeed,
-        position,
+        { 0.0f, 0.0f, 0.0f, 0.0f }, // create zeroed out position
+
         npc_type_data->light, // innate_light
         npc_type_data->texture,
         npc_type_data->helmtexture,
@@ -61,66 +77,30 @@ HardcoreGhost::HardcoreGhost(const NPCType *npc_type_data, const glm::vec4& posi
 {
 }
 
-void HardcoreGhost::Spawn(Client* client) {
-    if (!client) {
-        return;
+void HardcoreGhost::Spawn(const glm::vec4& in_position, Client* client = nullptr) 
+{
+    if (client) 
+    {
+        client->Message(Chat::White, "Spawning a hardcore ghost!");
     }
 
-    // Example functionality: Send a message to the client
-    client->Message(Chat::White, "Spawning a hardcore ghost!");
+    SetPosition(in_position);
 
-    // You can add more functionality here as needed
-    // For example, you might want to spawn an NPC or perform other actions
+    entity_list.AddHardcoreGhost(this);
 
-    // Create the Ghost
-    NPCType* npc_type = new NPCType;
-    memset(npc_type, 0, sizeof(NPCType));
-
-    strcpy(npc_type->name, "Hardcore Ghost");
-    npc_type->cur_hp = 1;
-    npc_type->max_hp = 1;
-    npc_type->race = 1;
-    npc_type->gender = 1;
-    npc_type->class_ = 1;
-    npc_type->deity = 1;
-    npc_type->level = 1;
-    npc_type->npc_id = 0;
-    npc_type->loottable_id = 0;
-    npc_type->texture = 1;
-    npc_type->light = 0; // spawncommand needs update
-    npc_type->runspeed = 1.3f;
-    npc_type->d_melee_texture1 = 1;
-    npc_type->d_melee_texture2 = 1;
-    npc_type->merchanttype = 0;
-    npc_type->bodytype = 1;
-
-    npc_type->STR = 150;
-    npc_type->STA = 150;
-    npc_type->DEX = 150;
-    npc_type->AGI = 150;
-    npc_type->INT = 150;
-    npc_type->WIS = 150;
-    npc_type->CHA = 150;
-
-    if (npc_type->size == 0.0f)
-        npc_type->size = 6.0f;
-
-    auto ghost = new HardcoreGhost(npc_type, client->GetPosition());
-
-    entity_list.AddHardcoreGhost(ghost);
-
-    if (client) {
+    if (client) 
+    {
         // Notify client of spawn data
         client->Message(Chat::White, "New spawn:");
-        client->Message(Chat::White, "Name: %s", ghost->name);
-        client->Message(Chat::White, "Race: %u", ghost->race);
-        client->Message(Chat::White, "Level: %u", ghost->level);
-        client->Message(Chat::White, "Material: %u", ghost->texture);
-        client->Message(Chat::White, "Current/Max HP: %i", ghost->max_hp);
-        client->Message(Chat::White, "Gender: %u", ghost->gender);
-        client->Message(Chat::White, "Class: %u", ghost->class_);
-        client->Message(Chat::White, "Bodytype: %u", ghost->bodytype);
-        client->Message(Chat::White, "EntityID: %u", ghost->GetID());
+        client->Message(Chat::White, "Name: %s", name);
+        client->Message(Chat::White, "Race: %u", race);
+        client->Message(Chat::White, "Level: %u", level);
+        client->Message(Chat::White, "Material: %u", texture);
+        client->Message(Chat::White, "Current/Max HP: %i", max_hp);
+        client->Message(Chat::White, "Gender: %u", gender);
+        client->Message(Chat::White, "Class: %u", class_);
+        client->Message(Chat::White, "Bodytype: %u", bodytype);
+        client->Message(Chat::White, "EntityID: %u", GetID());
     }
 }
 
@@ -162,21 +142,21 @@ void HardcoreGhost::ShowQuickStats(Client* c)
     c->Message(Chat::White, "Hidden: %i", hidden);
 }
 
-void HardcoreGhost::ProcessBotInspectionRequest(HardcoreGhost* inspectedBot, Client* client) 
+void HardcoreGhost::ProcessGhostInspectionRequest(HardcoreGhost* inspectedGhost, Client* client) 
 {
-    if (inspectedBot && client) 
+    if (inspectedGhost && client) 
     {
         EQApplicationPacket* outapp = new EQApplicationPacket(OP_InspectAnswer, sizeof(InspectResponse_Struct));
         InspectResponse_Struct* insr = (InspectResponse_Struct*) outapp->pBuffer;
-        insr->TargetID = inspectedBot->GetNPCTypeID();
-        insr->PlayerID = inspectedBot->GetID();
+        insr->TargetID = inspectedGhost->GetNPCTypeID();
+        insr->PlayerID = inspectedGhost->GetID();
 
         //const EQ::ItemData* item = nullptr;
         //const EQ::ItemInstance* inst = nullptr;
 
         for (int16 L = EQ::invslot::EQUIPMENT_BEGIN; L <= EQ::invslot::EQUIPMENT_END; L++) 
         {
-            //inst = inspectedBot->GetBotItem(L);
+            //inst = inspectedGhost->GetGhostItem(L);
 
             //if (inst) {
             //item = inst->GetItem();
@@ -198,13 +178,84 @@ void HardcoreGhost::ProcessBotInspectionRequest(HardcoreGhost* inspectedBot, Cli
             // }
         }
 
-        //strcpy(insr->text, inspectedBot->GetInspectMessage().text);
+        //strcpy(insr->text, inspectedGhost->GetInspectMessage().text);
         Log(Logs::General, Logs::Info, "Sending InspectAnswer to client from HardcoreGhost");
 
         client->QueuePacket(outapp); // Send answer to requester
         safe_delete(outapp);
     }
 }
+
+NPCType *HardcoreGhost::FillNPCTypeStruct(
+	const std::string& ghostName,
+	const std::string& ghostLastName,
+	uint8 ghostLevel,
+	uint16 ghostRace,
+	uint8 ghostClass,
+	uint8 gender,
+	float size,
+	uint32 face,
+	uint32 hairStyle,
+	uint32 hairColor,
+	uint32 eyeColor,
+	uint32 eyeColor2,
+	uint32 beard,
+	uint32 beardColor
+) {
+	auto n = new NPCType{ 0 };
+
+	strn0cpy(n->name, ghostName.c_str(), sizeof(n->name));
+	strn0cpy(n->lastname, ghostLastName.c_str(), sizeof(n->lastname));
+
+	n->size = size;
+	n->runspeed = 1.25f;
+	n->gender = gender;
+	n->race = ghostRace;
+	n->class_ = ghostClass;
+	n->deity = Deity::Agnostic1;
+	n->level = ghostLevel;
+	n->haircolor = hairColor;
+	n->beardcolor = beardColor;
+	n->eyecolor1 = eyeColor;
+	n->eyecolor2 = eyeColor2;
+	n->hairstyle = hairStyle;
+	n->luclinface = face;
+	n->beard = beard;
+	n->maxlevel = ghostLevel;
+
+    // Temp to fill out the rest of the struct
+    n->bodytype = 1;
+    n->npc_id = 0;
+    n->loottable_id = 0;
+    n->texture = 1;
+    n->light = 0; //spawncommand needs to update
+    n->d_melee_texture1 = 1;
+    n->d_melee_texture2 = 1;
+    n->merchanttype = 0;
+    n->cur_hp = 1;
+	n->max_hp = 1;
+    n->AC = 12;
+	n->ATK = 75;
+	n->STR = 75;
+	n->STA = 75;
+	n->DEX = 75;
+	n->AGI = 75;
+	n->INT = 75;
+	n->WIS = 75;
+	n->CHA = 75;
+	n->MR = 25;
+	n->FR = 25;
+	n->CR = 25;
+	n->PR = 15;
+	n->DR = 15;
+	n->hp_regen = 1;
+	n->mana_regen = 1;
+
+	return n;
+}
+
+
+// Boilerplate functions that don't do anything, but allow compiling
 
 // Define the pure virtual functions from the Mob class
 bool HardcoreGhost::Death(Mob* killerMob, int32 damage, uint16 spell_id, EQ::skills::SkillType attack_skill, uint8 killedby, bool bufftic) {

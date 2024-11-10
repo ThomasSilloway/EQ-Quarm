@@ -6148,7 +6148,7 @@ void Client::Handle_OP_InspectRequest(const EQApplicationPacket *app)
 		tmp->CastToClient()->QueuePacket(app);
 	} // Send request to target 
 
-	if (tmp != 0 && tmp->IsHardcoreGhost()) { HardcoreGhost::ProcessBotInspectionRequest(tmp->CastToHardcoreGhost(), this); }
+	if (tmp != 0 && tmp->IsHardcoreGhost()) { HardcoreGhost::ProcessGhostInspectionRequest(tmp->CastToHardcoreGhost(), this); }
 
 	return;
 }

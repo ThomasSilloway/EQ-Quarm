@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 #include <queue>
+#include <string>
+#include <glm/vec4.hpp>
 
 #include "../common/types.h"
 #include "../common/linked_list.h"
@@ -19,16 +21,36 @@
 class HardcoreGhost : public Mob
 {
 public:
-    HardcoreGhost(const NPCType *npc_type_data, const glm::vec4& position);
+    HardcoreGhost(const NPCType *npc_type_data);
 
-    // Static method to spawn a hardcore ghost
-    static void Spawn(Client* client);
+	// Static method to load a hardcore ghost
+    static HardcoreGhost* LoadBot(const std::string& ghost_name);
+
+    void Spawn(const glm::vec4& in_position, Client* client);
 	bool Process() override;
 	bool Save() override;
 	bool IsNPC() const override { return false; }
 	bool IsHardcoreGhost()	const override { return true; }
 	void ShowQuickStats(Client* client);
-	static void ProcessBotInspectionRequest(HardcoreGhost* inspectedBot, Client* client);
+	static void ProcessGhostInspectionRequest(HardcoreGhost* inspectedGhost, Client* client);
+
+    // Static method to create and fill NPCType structures
+    static NPCType* FillNPCTypeStruct(
+        const std::string& ghostName,
+        const std::string& ghostLastName,
+        uint8 ghostLevel,
+        uint16 ghostRace,
+        uint8 ghostClass,
+        uint8 gender,
+        float size,
+        uint32 face,
+        uint32 hairStyle,
+        uint32 hairColor,
+        uint32 eyeColor,
+        uint32 eyeColor2,
+        uint32 beard,
+        uint32 beardColor
+    );
 
 	// TODO for adding items
 	// void AddBotItem(

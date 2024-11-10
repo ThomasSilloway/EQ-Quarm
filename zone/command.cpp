@@ -5227,8 +5227,19 @@ void command_rewind(Client *c, const Seperator *sep){
 
 void command_spawnhardcoreghost(Client *c, const Seperator *sep)
 {
-	// TODO Add usage instructions
-	HardcoreGhost::Spawn(c);
+	if (strlen(sep->arg[1]) <= 64) {
+		auto ghost = HardcoreGhost::LoadBot(sep->arg[1]);
+		if(ghost != nullptr)
+		{
+			ghost->Spawn(c->GetPosition(), c);
+		}
+		else
+		{
+			c->Message(Chat::Default, "Error: Could not find HardcoreGhost %s in the hardcore_ghosts table", sep->arg[1]);
+		}
+	} else {
+		c->Message(Chat::Default, "Usage: #spawnhardcoreghost <playername> where <playername> is less than 64 chars long");
+	}
 }
 
 void command_spawnstatus(Client *c, const Seperator *sep)
