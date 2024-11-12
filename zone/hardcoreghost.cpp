@@ -154,31 +154,32 @@ void HardcoreGhost::ProcessGhostInspectionRequest(HardcoreGhost* inspectedGhost,
         insr->TargetID = inspectedGhost->GetNPCTypeID();
         insr->PlayerID = inspectedGhost->GetID();
 
-        //const EQ::ItemData* item = nullptr;
-        //const EQ::ItemInstance* inst = nullptr;
+        const EQ::ItemData* item = nullptr;
+        const EQ::ItemInstance* inst = nullptr;
 
         for (int16 L = EQ::invslot::EQUIPMENT_BEGIN; L <= EQ::invslot::EQUIPMENT_END; L++) 
         {
-            //inst = inspectedGhost->GetGhostItem(L);
+            inst = inspectedGhost->GetGhostItem(L);
 
-            //if (inst) {
-            //item = inst->GetItem();
-
-            // For now hardcode one just for testing
-            if (L == 1) 
+            if (inst) 
             {
-                strcpy(insr->itemnames[L], "Silver Earring");
-                insr->itemicons[L] = 544;
+                item = inst->GetItem();
+                if (item) 
+                {
+                    strcpy(insr->itemnames[L], item->Name);
+                    insr->itemicons[L] = item->Icon;
+                }
+                else 
+                {
+                    insr->itemnames[L][0] = '\0';
+                    insr->itemicons[L] = 0xFFFFFFFF;
+                }
             }
             else 
             {
                 insr->itemnames[L][0] = '\0';
-                //insr->itemicons[L] = 0xFFFFFFFF;
+                insr->itemicons[L] = 0xFFFFFFFF;
             }
-            // else {
-            //  insr->itemnames[L][0] = '\0';
-            //  insr->itemicons[L] = 0xFFFFFFFF;
-            // }
         }
 
         //strcpy(insr->text, inspectedGhost->GetInspectMessage().text);
