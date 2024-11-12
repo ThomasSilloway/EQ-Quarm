@@ -5228,7 +5228,7 @@ void command_rewind(Client *c, const Seperator *sep){
 void command_spawnhardcoreghost(Client *c, const Seperator *sep)
 {
 	if (strlen(sep->arg[1]) <= 64) {
-		auto ghost = HardcoreGhost::LoadBot(sep->arg[1]);
+		auto ghost = HardcoreGhost::LoadGhost(sep->arg[1]);
 		if(ghost != nullptr)
 		{
 			ghost->Spawn(c->GetPosition(), c);

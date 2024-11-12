@@ -6,21 +6,23 @@
 #include "npc.h"
 #include "entity.h"
 
-HardcoreGhost* HardcoreGhost::LoadBot(const std::string& ghost_name)
+HardcoreGhost* HardcoreGhost::LoadGhost(const std::string& ghost_name)
 {
     if (ghost_name.empty()) {
         return nullptr;
     }
 
-    HardcoreGhost* loaded_bot = nullptr;
+    HardcoreGhost* loaded_ghost = nullptr;
 
-    if (!HardcoreGhostDatabase::LoadHardcoreGhost(ghost_name, loaded_bot)) 
-		return loaded_bot;
+    if (!HardcoreGhostDatabase::LoadHardcoreGhost(ghost_name, loaded_ghost)) 
+		return loaded_ghost;
 
-	return loaded_bot;
+    loaded_ghost->EquipItems();
+
+	return loaded_ghost;
 }
 
-HardcoreGhost::HardcoreGhost(const NPCType *npc_type_data)
+HardcoreGhost::HardcoreGhost(const NPCType *npc_type_data, uint32_t ghost_id)
     : Mob(
         npc_type_data->name,
         npc_type_data->lastname,
@@ -75,9 +77,10 @@ HardcoreGhost::HardcoreGhost(const NPCType *npc_type_data)
         npc_type_data->chesttexture
     )
 {
+    _ghostID = ghost_id;
 }
 
-void HardcoreGhost::Spawn(const glm::vec4& in_position, Client* client = nullptr) 
+void HardcoreGhost::Spawn(const glm::vec4& in_position, Client* client) 
 {
     if (client) 
     {
@@ -253,6 +256,43 @@ NPCType *HardcoreGhost::FillNPCTypeStruct(
 
 	return n;
 }
+
+void HardcoreGhost::EquipItems() 
+{
+	GetGhostItems(m_inv);
+	// const EQ::ItemInstance* inst = nullptr;
+	// const EQ::ItemData* item = nullptr;
+	// for (int slot_id = EQ::invslot::EQUIPMENT_BEGIN; slot_id <= EQ::invslot::EQUIPMENT_END; ++slot_id) {
+	// 	inst = GetGhostItem(slot_id);
+	// 	if (inst) {
+	// 		item = inst->GetItem();
+	// 		GhostTradeAddItem(inst, slot_id, false);
+	// 	}
+	// }
+	UpdateEquipmentLight();
+}
+
+// Retrieves all the inventory records from the database for this ghost.
+void HardcoreGhost::GetGhostItems(EQ::InventoryProfile &inv)
+{
+	if (!_ghostID) {
+		return;
+	}
+
+	if (!HardcoreGhostDatabase::LoadItems(_ghostID, inv)) {
+		return;
+	}
+}
+
+// // Returns the item id that is in the ghost inventory collection for the specified slot.
+// EQ::ItemInstance* HardcoreGhost::GetGhostItem(uint16 slot_id) {
+// 	EQ::ItemInstance* item = m_inv.GetItem(slot_id);
+// 	if (item) {
+// 		return item;
+// 	}
+
+// 	return nullptr;
+// }
 
 
 // Boilerplate functions that don't do anything, but allow compiling

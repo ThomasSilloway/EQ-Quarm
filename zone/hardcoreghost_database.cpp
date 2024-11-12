@@ -1,4 +1,7 @@
 #include "../common/repositories/base/base_hardcoreghost_repository.h"
+#include "../common/repositories/base/base_hardcore_ghost_inventory_repository.h"
+#include "../common/emu_constants.h"
+
 #include "hardcoreghost_database.h"
 #include "hardcoreghost.h"
 
@@ -34,7 +37,7 @@ bool HardcoreGhostDatabase::LoadHardcoreGhost(const std::string& ghost_name, Har
         ghost_data.beard_color
     );
 
-    loaded_ghost = new HardcoreGhost(t);
+    loaded_ghost = new HardcoreGhost(t, ghost_data.ghost_id);
 
     // TODO later if needed
     // if (loaded_ghost) {
@@ -44,4 +47,59 @@ bool HardcoreGhostDatabase::LoadHardcoreGhost(const std::string& ghost_name, Har
     // }
 
     return true;
+}
+
+bool HardcoreGhostDatabase::LoadItems(const uint32 ghost_id, EQ::InventoryProfile& inventory_inst)
+{
+	if (!ghost_id) {
+		return false;
+	}
+
+	const auto& l = BaseHardcoreGhostInventoryRepository::GetWhere(
+		database,
+		fmt::format(
+			"`ghost_id` = {} ORDER BY `slotid`",
+			ghost_id
+		)
+	);
+
+	if (l.empty()) {
+		return true;
+	}
+
+	for (const auto& e : l) {
+		if (!EQ::ValueWithin(e.slotid, EQ::invslot::EQUIPMENT_BEGIN, EQ::invslot::EQUIPMENT_END)) {
+			continue;
+		}
+
+        auto inst = database.CreateItem(database.GetItem(e.itemid));
+
+		if (!inst) {
+			LogError(
+				"Warning: ghost_id [{}] has an invalid itemid [{}] in slotid [{}]",
+				ghost_id,
+				e.itemid,
+				e.slotid
+			);
+
+			continue;
+		}
+
+		if (inventory_inst.PutItem(e.slotid, *inst) == INVALID_INDEX) {
+			LogError(
+				"Warning: Invalid slotid for item in inventory: ghost_id [{}] itemid [{}] slotid [{}]",
+				ghost_id,
+				e.itemid,
+				e.slotid
+			);
+		}
+        else
+        {
+            Log(Logs::General, Logs::Info, "HardcoreGhostDatabase::LoadItems() - Loaded item: %s", inst->GetItem()->Name);
+        }
+
+		safe_delete(inst);
+	}
+
+	return true;
 }
