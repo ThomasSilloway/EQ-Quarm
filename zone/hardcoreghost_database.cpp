@@ -95,7 +95,7 @@ bool HardcoreGhostDatabase::LoadItems(const uint32 ghost_id, EQ::InventoryProfil
 		}
         else
         {
-            Log(Logs::General, Logs::Info, "HardcoreGhostDatabase::LoadItems() - Loaded item: %s", inst->GetItem()->Name);
+            Log(Logs::General, Logs::Info, "HardcoreGhostDatabase::LoadItems() - Loaded item: %s for slot: %d", inst->GetItem()->Name, e.slotid);
         }
 
 		safe_delete(inst);

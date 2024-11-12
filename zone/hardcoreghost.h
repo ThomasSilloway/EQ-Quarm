@@ -64,6 +64,10 @@ public:
 
     void EquipItems();
     void GetGhostItems(EQ::InventoryProfile &inv);
+	EQ::ItemInstance* GetGhostItem(uint16 slot_id);
+    void GhostAddEquipItem(uint16 slot_id, uint32 item_id);
+	uint32 GetEquipment(uint8 material_slot) const;
+
 
     // Abstract virtual function implementations required by base abstract class
     virtual bool Death(Mob* killerMob, int32 damage, uint16 spell_id, EQ::skills::SkillType attack_skill, uint8 killedby = 0, bool bufftic = false) override;
@@ -89,6 +93,7 @@ protected:
 private:
     // Class Members
     uint32_t _ghostID;
+	uint32_t equipment[EQ::invslot::EQUIPMENT_COUNT];	//this is an array of item IDs
 };
 
 #endif // HARDCOREGHOST_H

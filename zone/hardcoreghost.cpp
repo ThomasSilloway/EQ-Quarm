@@ -17,8 +17,6 @@ HardcoreGhost* HardcoreGhost::LoadGhost(const std::string& ghost_name)
     if (!HardcoreGhostDatabase::LoadHardcoreGhost(ghost_name, loaded_ghost)) 
 		return loaded_ghost;
 
-    loaded_ghost->EquipItems();
-
 	return loaded_ghost;
 }
 
@@ -105,6 +103,8 @@ void HardcoreGhost::Spawn(const glm::vec4& in_position, Client* client)
         client->Message(Chat::White, "Bodytype: %u", bodytype);
         client->Message(Chat::White, "EntityID: %u", GetID());
     }
+
+    EquipItems();
 }
 
 bool HardcoreGhost::Process()
@@ -259,16 +259,19 @@ NPCType *HardcoreGhost::FillNPCTypeStruct(
 
 void HardcoreGhost::EquipItems() 
 {
+    // Load from the DB
 	GetGhostItems(m_inv);
-	// const EQ::ItemInstance* inst = nullptr;
-	// const EQ::ItemData* item = nullptr;
-	// for (int slot_id = EQ::invslot::EQUIPMENT_BEGIN; slot_id <= EQ::invslot::EQUIPMENT_END; ++slot_id) {
-	// 	inst = GetGhostItem(slot_id);
-	// 	if (inst) {
-	// 		item = inst->GetItem();
-	// 		GhostTradeAddItem(inst, slot_id, false);
-	// 	}
-	// }
+
+    // Equip the items
+	const EQ::ItemInstance* inst = nullptr;
+	const EQ::ItemData* item = nullptr;
+	for (int slot_id = EQ::invslot::EQUIPMENT_BEGIN; slot_id <= EQ::invslot::EQUIPMENT_END; ++slot_id) {
+		inst = GetGhostItem(slot_id);
+		if (inst) {
+			item = inst->GetItem();
+			GhostAddEquipItem(slot_id, item->ID);
+		}
+	}
 	UpdateEquipmentLight();
 }
 
@@ -284,15 +287,51 @@ void HardcoreGhost::GetGhostItems(EQ::InventoryProfile &inv)
 	}
 }
 
-// // Returns the item id that is in the ghost inventory collection for the specified slot.
-// EQ::ItemInstance* HardcoreGhost::GetGhostItem(uint16 slot_id) {
-// 	EQ::ItemInstance* item = m_inv.GetItem(slot_id);
-// 	if (item) {
-// 		return item;
-// 	}
+// Returns the item id that is in the ghost inventory collection for the specified slot.
+EQ::ItemInstance* HardcoreGhost::GetGhostItem(uint16 slot_id) 
+{
+	EQ::ItemInstance* item = m_inv.GetItem(slot_id);
+	if (item) {
+		return item;
+	}
 
-// 	return nullptr;
-// }
+	return nullptr;
+}
+
+// Adds the specified item it ghost  to the NPC equipment array and to the ghost inventory collection.
+void HardcoreGhost::GhostAddEquipItem(uint16 slot_id, uint32 item_id) 
+{
+    Log(Logs::Detail, Logs::Inventory, "Character: %s trying to add item %d to slot %d", GetName(), item_id, slot_id);
+	if (item_id) 
+    {
+		if (uint8 material_from_slot = EQ::InventoryProfile::CalcMaterialFromSlot(slot_id); material_from_slot != EQ::textures::materialInvalid) 
+        {
+			equipment[slot_id] = item_id; // npc has more than just material slots. Valid material should mean valid inventory index
+			if (_ghostID) 
+            { 
+                Log(Logs::Detail, Logs::Inventory, "Character: %s sending wear change for slot %d", GetName(), slot_id);
+				SendWearChange(material_from_slot);
+			}
+		}
+	}
+}
+
+uint32 HardcoreGhost::GetEquipment(uint8 material_slot) const
+{
+	if (material_slot > 8) {
+		return 0;
+	}
+	int invslot = EQ::InventoryProfile::CalcSlotFromMaterial(material_slot);
+
+	if (material_slot == EQ::textures::weaponPrimary && !equipment[EQ::invslot::slotPrimary] && !equipment[EQ::invslot::slotSecondary] && equipment[EQ::invslot::slotRange]) {
+		invslot = EQ::invslot::slotRange;
+	}
+
+	if (invslot == INVALID_INDEX) {
+		return 0;
+	}
+	return equipment[invslot];
+}
 
 
 // Boilerplate functions that don't do anything, but allow compiling
