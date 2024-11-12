@@ -15,9 +15,9 @@ HardcoreGhost* HardcoreGhost::LoadGhost(const std::string& ghost_name)
     HardcoreGhost* loaded_ghost = nullptr;
 
     if (!HardcoreGhostDatabase::LoadHardcoreGhost(ghost_name, loaded_ghost)) 
-		return loaded_ghost;
+        return loaded_ghost;
 
-	return loaded_ghost;
+    return loaded_ghost;
 }
 
 HardcoreGhost::HardcoreGhost(const NPCType *npc_type_data, uint32_t ghost_id)
@@ -190,41 +190,41 @@ void HardcoreGhost::ProcessGhostInspectionRequest(HardcoreGhost* inspectedGhost,
 }
 
 NPCType *HardcoreGhost::FillNPCTypeStruct(
-	const std::string& ghostName,
-	const std::string& ghostLastName,
-	uint8 ghostLevel,
-	uint16 ghostRace,
-	uint8 ghostClass,
-	uint8 gender,
-	float size,
-	uint32 face,
-	uint32 hairStyle,
-	uint32 hairColor,
-	uint32 eyeColor,
-	uint32 eyeColor2,
-	uint32 beard,
-	uint32 beardColor
+    const std::string& ghostName,
+    const std::string& ghostLastName,
+    uint8 ghostLevel,
+    uint16 ghostRace,
+    uint8 ghostClass,
+    uint8 gender,
+    float size,
+    uint32 face,
+    uint32 hairStyle,
+    uint32 hairColor,
+    uint32 eyeColor,
+    uint32 eyeColor2,
+    uint32 beard,
+    uint32 beardColor
 ) {
-	auto n = new NPCType{ 0 };
+    auto n = new NPCType{ 0 };
 
-	strn0cpy(n->name, ghostName.c_str(), sizeof(n->name));
-	strn0cpy(n->lastname, ghostLastName.c_str(), sizeof(n->lastname));
+    strn0cpy(n->name, ghostName.c_str(), sizeof(n->name));
+    strn0cpy(n->lastname, ghostLastName.c_str(), sizeof(n->lastname));
 
-	n->size = size;
-	n->runspeed = 1.25f;
-	n->gender = gender;
-	n->race = ghostRace;
-	n->class_ = ghostClass;
-	n->deity = Deity::Agnostic1;
-	n->level = ghostLevel;
-	n->haircolor = hairColor;
-	n->beardcolor = beardColor;
-	n->eyecolor1 = eyeColor;
-	n->eyecolor2 = eyeColor2;
-	n->hairstyle = hairStyle;
-	n->luclinface = face;
-	n->beard = beard;
-	n->maxlevel = ghostLevel;
+    n->size = size;
+    n->runspeed = 1.25f;
+    n->gender = gender;
+    n->race = ghostRace;
+    n->class_ = ghostClass;
+    n->deity = Deity::Agnostic1;
+    n->level = ghostLevel;
+    n->haircolor = hairColor;
+    n->beardcolor = beardColor;
+    n->eyecolor1 = eyeColor;
+    n->eyecolor2 = eyeColor2;
+    n->hairstyle = hairStyle;
+    n->luclinface = face;
+    n->beard = beard;
+    n->maxlevel = ghostLevel;
 
     // Temp to fill out the rest of the struct
     n->bodytype = 1;
@@ -236,101 +236,101 @@ NPCType *HardcoreGhost::FillNPCTypeStruct(
     n->d_melee_texture2 = 1;
     n->merchanttype = 0;
     n->cur_hp = 1;
-	n->max_hp = 1;
+    n->max_hp = 1;
     n->AC = 12;
-	n->ATK = 75;
-	n->STR = 75;
-	n->STA = 75;
-	n->DEX = 75;
-	n->AGI = 75;
-	n->INT = 75;
-	n->WIS = 75;
-	n->CHA = 75;
-	n->MR = 25;
-	n->FR = 25;
-	n->CR = 25;
-	n->PR = 15;
-	n->DR = 15;
-	n->hp_regen = 1;
-	n->mana_regen = 1;
+    n->ATK = 75;
+    n->STR = 75;
+    n->STA = 75;
+    n->DEX = 75;
+    n->AGI = 75;
+    n->INT = 75;
+    n->WIS = 75;
+    n->CHA = 75;
+    n->MR = 25;
+    n->FR = 25;
+    n->CR = 25;
+    n->PR = 15;
+    n->DR = 15;
+    n->hp_regen = 1;
+    n->mana_regen = 1;
 
-	return n;
+    return n;
 }
 
 void HardcoreGhost::EquipItems() 
 {
     // Load from the DB
-	GetGhostItems(m_inv);
+    GetGhostItems(m_inv);
 
     // Equip the items
-	const EQ::ItemInstance* inst = nullptr;
-	const EQ::ItemData* item = nullptr;
-	for (int slot_id = EQ::invslot::EQUIPMENT_BEGIN; slot_id <= EQ::invslot::EQUIPMENT_END; ++slot_id) {
-		inst = GetGhostItem(slot_id);
-		if (inst) {
-			item = inst->GetItem();
-			GhostAddEquipItem(slot_id, item->ID);
-		}
-	}
-	UpdateEquipmentLight();
+    const EQ::ItemInstance* inst = nullptr;
+    const EQ::ItemData* item = nullptr;
+    for (int slot_id = EQ::invslot::EQUIPMENT_BEGIN; slot_id <= EQ::invslot::EQUIPMENT_END; ++slot_id) {
+        inst = GetGhostItem(slot_id);
+        if (inst) {
+            item = inst->GetItem();
+            GhostAddEquipItem(slot_id, item->ID);
+        }
+    }
+    UpdateEquipmentLight();
 }
 
 // Retrieves all the inventory records from the database for this ghost.
 void HardcoreGhost::GetGhostItems(EQ::InventoryProfile &inv)
 {
-	if (!_ghostID) {
-		return;
-	}
+    if (!_ghostID) {
+        return;
+    }
 
-	if (!HardcoreGhostDatabase::LoadItems(_ghostID, inv)) {
-		return;
-	}
+    if (!HardcoreGhostDatabase::LoadItems(_ghostID, inv)) {
+        return;
+    }
 }
 
 // Returns the item id that is in the ghost inventory collection for the specified slot.
 EQ::ItemInstance* HardcoreGhost::GetGhostItem(uint16 slot_id) 
 {
-	EQ::ItemInstance* item = m_inv.GetItem(slot_id);
-	if (item) {
-		return item;
-	}
+    EQ::ItemInstance* item = m_inv.GetItem(slot_id);
+    if (item) {
+        return item;
+    }
 
-	return nullptr;
+    return nullptr;
 }
 
 // Adds the specified item it ghost  to the NPC equipment array and to the ghost inventory collection.
 void HardcoreGhost::GhostAddEquipItem(uint16 slot_id, uint32 item_id) 
 {
     Log(Logs::Detail, Logs::Inventory, "Character: %s trying to add item %d to slot %d", GetName(), item_id, slot_id);
-	if (item_id) 
+    if (item_id) 
     {
-		if (uint8 material_from_slot = EQ::InventoryProfile::CalcMaterialFromSlot(slot_id); material_from_slot != EQ::textures::materialInvalid) 
+        if (uint8 material_from_slot = EQ::InventoryProfile::CalcMaterialFromSlot(slot_id); material_from_slot != EQ::textures::materialInvalid) 
         {
-			equipment[slot_id] = item_id; // npc has more than just material slots. Valid material should mean valid inventory index
-			if (_ghostID) 
+            equipment[slot_id] = item_id; // npc has more than just material slots. Valid material should mean valid inventory index
+            if (_ghostID) 
             { 
                 Log(Logs::Detail, Logs::Inventory, "Character: %s sending wear change for slot %d", GetName(), slot_id);
-				SendWearChange(material_from_slot);
-			}
-		}
-	}
+                SendWearChange(material_from_slot);
+            }
+        }
+    }
 }
 
 uint32 HardcoreGhost::GetEquipment(uint8 material_slot) const
 {
-	if (material_slot > 8) {
-		return 0;
-	}
-	int invslot = EQ::InventoryProfile::CalcSlotFromMaterial(material_slot);
+    if (material_slot > 8) {
+        return 0;
+    }
+    int invslot = EQ::InventoryProfile::CalcSlotFromMaterial(material_slot);
 
-	if (material_slot == EQ::textures::weaponPrimary && !equipment[EQ::invslot::slotPrimary] && !equipment[EQ::invslot::slotSecondary] && equipment[EQ::invslot::slotRange]) {
-		invslot = EQ::invslot::slotRange;
-	}
+    if (material_slot == EQ::textures::weaponPrimary && !equipment[EQ::invslot::slotPrimary] && !equipment[EQ::invslot::slotSecondary] && equipment[EQ::invslot::slotRange]) {
+        invslot = EQ::invslot::slotRange;
+    }
 
-	if (invslot == INVALID_INDEX) {
-		return 0;
-	}
-	return equipment[invslot];
+    if (invslot == INVALID_INDEX) {
+        return 0;
+    }
+    return equipment[invslot];
 }
 
 
